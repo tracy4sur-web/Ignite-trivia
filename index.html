@@ -14,6 +14,8 @@
     }
     .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
     h1 { color: #FF6B35; margin-bottom: 20px; }
+    .selector { margin-bottom: 30px; }
+    select { padding: 10px; font-size: 16px; background: #1A1A1A; color: #F0F0F0; border: 1px solid #FF6B35; }
     .quiz-card { 
       background: #1A1A1A; 
       border: 1px solid #2A2A2A; 
@@ -29,26 +31,57 @@
       border-radius: 8px;
       cursor: pointer;
       font-size: 16px;
-      margin: 10px 0;
+      margin: 10px 5px 10px 0;
     }
     button:hover { background: #E8631A; }
+    .options { margin: 20px 0; }
+    .option { padding: 10px; margin: 8px 0; background: #2A2A2A; border-left: 3px solid #FF6B35; }
+    .answer-box { background: #2A2A2A; margin-top: 20px; padding: 15px; border-radius: 8px; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🎯 Ignite IQ — Trivia</h1>
+    
+    <div class="selector">
+      <label>Select Week:</label>
+      <select onchange="selectQuiz(this.value)">
+        <option value="">-- Choose a Week --</option>
+      </select>
+    </div>
+    
     <div id="game"></div>
   </div>
 
   <script src="quizData.js"></script>
   <script>
-    // HOST CONSOLE for Trivia
-    // Loads quizData.js and displays questions
-    
     let currentQuizIndex = 0;
     let currentCategoryIndex = 0;
     let currentQuestionIndex = 0;
     let answerVisible = false;
+
+    // Populate week selector
+    function initSelector() {
+      const select = document.querySelector('select');
+      QUIZ_REPOSITORY.forEach((quiz, idx) => {
+        const option = document.createElement('option');
+        option.value = idx;
+        option.textContent = quiz.title;
+        select.appendChild(option);
+      });
+      if (QUIZ_REPOSITORY.length > 0) {
+        select.value = 0;
+        selectQuiz(0);
+      }
+    }
+
+    function selectQuiz(idx) {
+      currentQuizIndex = idx;
+      currentCategoryIndex = 0;
+      currentQuestionIndex = 0;
+      answerVisible = false;
+      renderGame();
+    }
 
     function renderGame() {
       const container = document.getElementById('game');
@@ -56,23 +89,31 @@
       const category = quiz.categories[currentCategoryIndex];
       const question = category.questions[currentQuestionIndex];
       
+      let optionsHTML = '';
+      if (question.options && question.options.length > 0) {
+        optionsHTML = `<div class="options">` + 
+          question.options.map((opt, i) => `<div class="option">${String.fromCharCode(65+i)}) ${opt}</div>`).join('') + 
+          `</div>`;
+      }
+      
       container.innerHTML = `
         <div class="quiz-card">
           <h2>${quiz.title}</h2>
-          <p>${category.name} (${currentQuestionIndex + 1}/${category.questions.length})</p>
+          <p><strong>${category.name}</strong> (Q${currentQuestionIndex + 1}/${category.questions.length})</p>
           <h3>${question.q}</h3>
-          <div>
-            ${question.options.map((opt, i) => `<p>${String.fromCharCode(65+i)}) ${opt}</p>`).join('')}
-          </div>
+          ${optionsHTML}
           <button onclick="toggleAnswer()">👁 Reveal Answer</button>
           ${answerVisible ? `
-            <div class="quiz-card" style="background: #2A2A2A; margin-top: 20px;">
-              <strong>Answer:</strong> ${question.a}
-              <p><em>Source:</em> ${question.source}</p>
-              <p><strong>💬 Spark:</strong> ${question.spark}</p>
+            <div class="answer-box">
+              <strong>✓ Answer:</strong> ${question.a}
+              <p style="margin-top: 10px; font-size: 14px;"><em>${question.source}</em></p>
+              ${question.spark ? `<p style="margin-top: 10px; color: #FFD700;"><strong>💬</strong> ${question.spark}</p>` : ''}
             </div>
           ` : ''}
-          <button onclick="nextQuestion()">Next →</button>
+          <div style="margin-top: 20px;">
+            <button onclick="prevQuestion()">← Back</button>
+            <button onclick="nextQuestion()">Next →</button>
+          </div>
         </div>
       `;
     }
@@ -92,13 +133,27 @@
         currentCategoryIndex++;
         currentQuestionIndex = 0;
       } else {
-        alert('Quiz complete!');
+        alert('Quiz complete! 🎉');
+        currentCategoryIndex = 0;
+        currentQuestionIndex = 0;
       }
       answerVisible = false;
       renderGame();
     }
 
-    renderGame();
+    function prevQuestion() {
+      if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+      } else if (currentCategoryIndex > 0) {
+        currentCategoryIndex--;
+        const quiz = QUIZ_REPOSITORY[currentQuizIndex];
+        currentQuestionIndex = quiz.categories[currentCategoryIndex].questions.length - 1;
+      }
+      answerVisible = false;
+      renderGame();
+    }
+
+    initSelector();
   </script>
 </body>
 </html>
