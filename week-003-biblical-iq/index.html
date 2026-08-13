@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ignite IQ — Trivia</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'DM Sans', sans-serif; 
+      background: #0F0F0F; 
+      color: #F0F0F0;
+      min-height: 100vh;
+    }
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+    h1 { color: #FF6B35; margin-bottom: 20px; }
+    .quiz-card { 
+      background: #1A1A1A; 
+      border: 1px solid #2A2A2A; 
+      border-radius: 12px; 
+      padding: 30px; 
+      margin: 20px 0;
+    }
+    button {
+      background: #FF6B35;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 0;
+    }
+    button:hover { background: #E8631A; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎯 Ignite IQ — Trivia</h1>
+    <div id="game"></div>
+  </div>
+
+  <script src="quizData.js"></script>
+  <script>
+    // HOST CONSOLE for Trivia
+    // Loads quizData.js and displays questions
+    
+    let currentQuizIndex = 0;
+    let currentCategoryIndex = 0;
+    let currentQuestionIndex = 0;
+    let answerVisible = false;
+
+    function renderGame() {
+      const container = document.getElementById('game');
+      const quiz = QUIZ_REPOSITORY[currentQuizIndex];
+      const category = quiz.categories[currentCategoryIndex];
+      const question = category.questions[currentQuestionIndex];
+      
+      container.innerHTML = `
+        <div class="quiz-card">
+          <h2>${quiz.title}</h2>
+          <p>${category.name} (${currentQuestionIndex + 1}/${category.questions.length})</p>
+          <h3>${question.q}</h3>
+          <div>
+            ${question.options.map((opt, i) => `<p>${String.fromCharCode(65+i)}) ${opt}</p>`).join('')}
+          </div>
+          <button onclick="toggleAnswer()">👁 Reveal Answer</button>
+          ${answerVisible ? `
+            <div class="quiz-card" style="background: #2A2A2A; margin-top: 20px;">
+              <strong>Answer:</strong> ${question.a}
+              <p><em>Source:</em> ${question.source}</p>
+              <p><strong>💬 Spark:</strong> ${question.spark}</p>
+            </div>
+          ` : ''}
+          <button onclick="nextQuestion()">Next →</button>
+        </div>
+      `;
+    }
+
+    function toggleAnswer() {
+      answerVisible = !answerVisible;
+      renderGame();
+    }
+
+    function nextQuestion() {
+      const quiz = QUIZ_REPOSITORY[currentQuizIndex];
+      const category = quiz.categories[currentCategoryIndex];
+      
+      if (currentQuestionIndex < category.questions.length - 1) {
+        currentQuestionIndex++;
+      } else if (currentCategoryIndex < quiz.categories.length - 1) {
+        currentCategoryIndex++;
+        currentQuestionIndex = 0;
+      } else {
+        alert('Quiz complete!');
+      }
+      answerVisible = false;
+      renderGame();
+    }
+
+    renderGame();
+  </script>
+</body>
+</html>
